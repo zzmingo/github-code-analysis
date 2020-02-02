@@ -2,7 +2,7 @@ const path = require('path')
 const fs = require('fs-extra')
 const shelljs = require('shelljs')
 
-shelljs.config.verbose = true
+shelljs.config.verbose = false
 
 const prjFolder = path.join(__dirname, '_projects')
 fs.ensureDirSync(prjFolder)
@@ -33,7 +33,64 @@ const shouldSkipExt = [
     'storyboard',
     'xcworkspacedata',
     'xcscheme',
-    'podspec'
+    'podspec',
+    'yml',
+    'icns',
+    'ico',
+    'p12',
+    'eot',
+    'svg',
+    'ttf',
+    'woff',
+    'woff2',
+    'jpg',
+    'list',
+    'otf',
+    'db',
+    'graphql',
+    'txt',
+    'docx',
+    'pem',
+    'ppk',
+    'cs',
+    'meta',
+    'dll',
+    'mdb',
+    'dylib',
+    'unity',
+    'prefab',
+    'so',
+    'anim',
+    'controller',
+    'mp3',
+    'pdf',
+    'ogg',
+    'csv',
+    'asset',
+    'jslib',
+    'guiskin',
+    'htm',
+    'xlsx',
+    'vdf',
+    'cfg',
+    'exe',
+    'crt',
+    'cnf',
+    'JPG',
+    'colors',
+    'XML',
+    'overrideController',
+    'physicsMaterial2D',
+    'psd',
+    'GUISkin',
+    'tga',
+    'TTF',
+    'zip',
+    'cmp',
+    'a',
+    'wav',
+    'jpeg',
+    'xcuserstate',
 ]
 const shouldSkipFolder = [
     'node_modules'
@@ -58,6 +115,8 @@ const langMap = {
     'md': 'markdown',
     'markdown': 'markdown',
     'sh': 'shell',
+    'ejs': 'html',
+    'vue': 'vue',
 }
 
 function analysis(file) {
@@ -88,8 +147,14 @@ function analysis(file) {
                 skipExt.push(ext)
             }
         } else {
+            if (fileName.endsWith('.min.js')) {
+                return
+            }
             result[lang] = result[lang] || 0
             result[lang] += fileStat.size
+            if (fileStat.size > 200 * 1024) {
+                console.log('warn: file too large: ' + file)
+            }
         }
     }
 }
