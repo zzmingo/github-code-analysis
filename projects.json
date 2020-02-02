@@ -1,0 +1,18 @@
+{
+    "user": "zzmingo",
+    "automatic": [
+        "JSBridge",
+        "Chili",
+        "website-singularity-hl-2",
+        "PuzzleSister",
+        "light",
+        "UnityLibrary",
+        "block.js",
+        "KT",
+        "cordova-UMengMobClick",
+        "cordova-KTPlay",
+        "iBaby"
+    ],
+    "custom": {
+    }
+}
