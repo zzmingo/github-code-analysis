@@ -1,8 +1,11 @@
 const path = require('path')
 const fs = require('fs-extra')
 const shelljs = require('shelljs')
+const skipConfig = require('./skips')
 
 shelljs.config.verbose = false
+
+console.log(process.argv)
 
 const prjFolder = path.join(__dirname, '_projects')
 fs.ensureDirSync(prjFolder)
@@ -13,88 +16,10 @@ const allProjects = config.automatic.concat(Object.keys(config.custom))
 shelljs.cd(prjFolder)
 
 const result = {}
+const resultLines = {}
 const skipExt = []
-const shouldSkipExt = [
-    'gradle',
-    'pro',
-    'xml',
-    'png',
-    'jar',
-    'properties',
-    'bat',
-    'lock',
-    'json',
-    'pbxproj',
-    'pch',
-    'modulemap',
-    'xcconfig',
-    'plist',
-    'xib',
-    'storyboard',
-    'xcworkspacedata',
-    'xcscheme',
-    'podspec',
-    'yml',
-    'icns',
-    'ico',
-    'p12',
-    'eot',
-    'svg',
-    'ttf',
-    'woff',
-    'woff2',
-    'jpg',
-    'list',
-    'otf',
-    'db',
-    'graphql',
-    'txt',
-    'docx',
-    'pem',
-    'ppk',
-    'cs',
-    'meta',
-    'dll',
-    'mdb',
-    'dylib',
-    'unity',
-    'prefab',
-    'so',
-    'anim',
-    'controller',
-    'mp3',
-    'pdf',
-    'ogg',
-    'csv',
-    'asset',
-    'jslib',
-    'guiskin',
-    'htm',
-    'xlsx',
-    'vdf',
-    'cfg',
-    'exe',
-    'crt',
-    'cnf',
-    'JPG',
-    'colors',
-    'XML',
-    'overrideController',
-    'physicsMaterial2D',
-    'psd',
-    'GUISkin',
-    'tga',
-    'TTF',
-    'zip',
-    'cmp',
-    'a',
-    'wav',
-    'jpeg',
-    'xcuserstate',
-]
-const shouldSkipFolder = [
-    'node_modules'
-]
+const shouldSkipExt = skipConfig.extensions
+const shouldSkipFolder = skipConfig.directories
 
 const langMap = {
     'swift': 'Swift',
@@ -110,13 +35,19 @@ const langMap = {
     'html': 'html',
     'css': 'css',
     'less': 'less',
-    'sass': 'sass',
+    'sass': 'scss',
     'scss': 'scss',
     'md': 'markdown',
     'markdown': 'markdown',
     'sh': 'shell',
     'ejs': 'html',
     'vue': 'vue',
+}
+
+function fileLines(file) {
+    let fileBuffer =  fs.readFileSync(file);
+    let num = fileBuffer.toString().split('\n').length;
+    return num
 }
 
 function analysis(file) {
@@ -144,7 +75,10 @@ function analysis(file) {
         const lang = langMap[ext]
         if (!lang) {
             if (shouldSkipExt.indexOf(ext) === -1 && skipExt.indexOf(ext) === -1) {
-                skipExt.push(ext)
+                let skips = skipConfig.ends.some(item => file.endsWith(item))
+                if (skips.length <= 0) {
+                    skipExt.push(ext)
+                }
             }
         } else {
             if (fileName.endsWith('.min.js')) {
@@ -152,11 +86,17 @@ function analysis(file) {
             }
             result[lang] = result[lang] || 0
             result[lang] += fileStat.size
-            if (fileStat.size > 200 * 1024) {
+            resultLines[lang] = resultLines[lang] || 0
+            resultLines[lang] += fileLines(file)
+            if (fileStat.size > 400 * 1024) {
                 console.log('warn: file too large: ' + file)
             }
         }
     }
+}
+
+function customAalysis(prjPath) {
+
 }
 
 allProjects.forEach(project => {
@@ -169,17 +109,26 @@ allProjects.forEach(project => {
 
     console.log('#### ' +  project)
     if (fs.existsSync(path.join(prjFolder, name))) {
-        console.log('git pull')
-        shelljs.cd(name)
-        shelljs.exec('git pull')
-        shelljs.cd('..')
+        if (process.argv[2] == "--quick") {
+            console.log('skip git pull')
+        } else {
+            console.log('git pull')
+            shelljs.cd(name)
+            shelljs.exec('git pull')
+            shelljs.cd('..')
+        }
     } else {
         console.log('git clone')
         shelljs.exec('git clone --depth 1 https://github.com/' + project + '.git')
     }
 
     console.log('analysising ...')
-    analysis(path.join(prjFolder, name))
+
+    if (config.custom[project]) {
+        customAalysis(path.join(prjFolder, name))
+    } else {
+        analysis(path.join(prjFolder, name))
+    }
 
     console.log('#### done')
     console.log()
@@ -195,7 +144,13 @@ keys.forEach(key => {
 let table = []
 keys.forEach(key => {
     let percent = (Math.ceil(result[key] / total * 1000) / 10)
-    table.push({ Language: key, Percentage: percent + '%' })
+    if (percent < 1) {
+        return
+    }
+    table.push({ Language: key, Lines: resultLines[key] || 0, Percentage: percent + '%' })
+})
+table.sort((a, b) => {
+    return b.Lines - a.Lines
 })
 console.table(table)
 
