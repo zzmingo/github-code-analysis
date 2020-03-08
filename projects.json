@@ -12,14 +12,14 @@
         "iBaby",
         "SampleRNIntegration",
         "github-code-analysis",
-        "zzm2q/Number99",
         "zzm2q/enjoystick",
         "zzm2q/gapagent",
         "zzm2q/WOZLLA.js",
         "wozlla/CollisionEditor",
         "wozlla/WozllaIDEAPlugin",
         "wozlla/WOZLLA.PureMVC.js",
-        "wozlla/WOZLLA.DragonBone.js"
+        "wozlla/WOZLLA.DragonBone.js",
+        "zzm2q/Number99"
     ],
     "custom": {
     }
